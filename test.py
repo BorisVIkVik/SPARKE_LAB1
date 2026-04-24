@@ -1,23 +1,55 @@
 # from pyspark.sql import SparkSession
 import os
 from pyspark.sql import SparkSession
+from pyspark.pandas import read_parquet
 os.environ["PYARROW_IGNORE_TIMEZONE"] = "1" # без этой строчки у нас будет возникать постоянное предупреждение с просьбой установить эту переменную в значение 1, что мы заранее и делаем
-spark = SparkSession.builder.appName("MyApp").master("local[*]").getOrCreate()
+spark = SparkSession.builder.appName("MyApp").master("local[*]") \
+     .config("spark.driver.memory", "8g") \
+    .config("spark.executor.memory", "2g") \
+    .config("spark.driver.maxResultSize", "1g") \
+    .config("spark.sql.adaptive.enabled", "true") \
+    .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
+    .config("spark.sql.shuffle.partitions", "8") \
+    .config("spark.default.parallelism", "8") \
+    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+    .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
+    .config("spark.sql.files.maxPartitionBytes", "64m") \
+    .config("spark.sql.files.openCostInBytes", "4194304") \
+    .getOrCreate()
+df = spark.read.parquet('./food.parquet')
+# df = df.
+# df = df.dropna()
 
-# url = "sc://10.247.46.112:15002/;token=your_token;use_ssl=true"
-# spark = SparkSession.builder.remote(url).getOrCreate()
-spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
-df = spark.createDataFrame([(1, "test")], ["id", "value"])
-df.show()
+df_single = df.select("with_sweeteners").dropna()
+print(f'Hello count: {df_single.count()}')
+from pyspark.ml.clustering import KMeans
 
-# import os
-# try:
-#     while True:
-#         a = 1 
-#         print(a)
-# except KeyboardInterrupt as e:
-#     print(e)
 
+from pyspark.ml.feature import VectorAssembler
+
+assembler = VectorAssembler(
+    inputCols=["with_sweeteners"],
+    outputCol="features"
+)
+
+df2 = assembler.transform(df.fillna(0, subset=["with_sweeteners"]))
+kmeans = KMeans(featuresCol='features',k=2)
+model = kmeans.fit(df2)
+predictions = model.transform(df2)
+
+centers = model.clusterCenters()
+print("Cluster Centers: ")
+for center in centers:
+    print(center)
+# df.printSchema()
+# df_single = df.repartition(200)
+# print(f"Количество партиций: {df_single.rdd.getNumPartitions()}")
+# # df_single.cache()
+# df_single.dropna()
+
+# print(f"Количество строк: {df_single.count()}")
+# df_single.describe().show()
+# df.unpersist()
 print(spark)
 spark.stop()
