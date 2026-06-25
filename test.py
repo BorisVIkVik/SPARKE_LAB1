@@ -2,7 +2,7 @@
 import os
 from pyspark.sql import SparkSession
 from pyspark.pandas import read_parquet
-os.environ["PYARROW_IGNORE_TIMEZONE"] = "1" # без этой строчки у нас будет возникать постоянное предупреждение с просьбой установить эту переменную в значение 1, что мы заранее и делаем
+os.environ["PYARROW_IGNORE_TIMEZONE"] = "1" 
 spark = SparkSession.builder.appName("MyApp").master("local[*]") \
      .config("spark.driver.memory", "8g") \
     .config("spark.executor.memory", "2g") \
@@ -17,8 +17,6 @@ spark = SparkSession.builder.appName("MyApp").master("local[*]") \
     .config("spark.sql.files.openCostInBytes", "4194304") \
     .getOrCreate()
 df = spark.read.parquet('./food.parquet')
-# df = df.
-# df = df.dropna()
 
 
 df_single = df.select("with_sweeteners").dropna()
@@ -42,14 +40,6 @@ centers = model.clusterCenters()
 print("Cluster Centers: ")
 for center in centers:
     print(center)
-# df.printSchema()
-# df_single = df.repartition(200)
-# print(f"Количество партиций: {df_single.rdd.getNumPartitions()}")
-# # df_single.cache()
-# df_single.dropna()
 
-# print(f"Количество строк: {df_single.count()}")
-# df_single.describe().show()
-# df.unpersist()
 print(spark)
 spark.stop()
