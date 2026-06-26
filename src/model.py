@@ -18,7 +18,7 @@ spark = builder.getOrCreate()
 df = spark.read.parquet('data/food.parquet')
 
 
-df_single = df.select("with_sweeteners").dropna()
+df_single = df.select("known_ingredients_n").dropna()
 print(f'Hello count: {df_single.count()}')
 from pyspark.ml.clustering import KMeans
 
@@ -26,11 +26,11 @@ from pyspark.ml.clustering import KMeans
 from pyspark.ml.feature import VectorAssembler
 
 assembler = VectorAssembler(
-    inputCols=["with_sweeteners"],
+    inputCols=["known_ingredients_n"],
     outputCol="features"
 )
 
-df2 = assembler.transform(df.fillna(0, subset=["with_sweeteners"]))
+df2 = assembler.transform(df.fillna(0, subset=["known_ingredients_n"]))
 kmeans = KMeans(featuresCol='features',k=2)
 model = kmeans.fit(df2)
 predictions = model.transform(df2)
