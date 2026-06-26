@@ -25,3 +25,4 @@ https://huggingface.co/datasets/openfoodfacts/product-database
 Сначала загружаются данные, потом делается word count по не None строчкам колонки known_ingredients_n.
 Далее делается кластеризация с помощью KMeans на 2 кластера.
 
+    python src/main.py
